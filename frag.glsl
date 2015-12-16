@@ -3,15 +3,12 @@
 out vec4 colorOut;
 uniform vec2 res;
 uniform float t;
+uniform float zoom = 1.0;
 
  #define MARCHLIMIT 70
 
 vec3 camPos = vec3(0.0, 0.0, -1.0);
 vec3 ld = vec3(0.0, 0.0, 1.0);
-vec3 up = vec3(0.0, 1.0, 0.0);
-vec3 right = vec3(1.0, 0.0, 0.0);
-vec3 lightpos = vec3(1.5, 1.5, 1.5);
-
 
 // Smooth HSV to RGB conversion
 vec3 hsv2rgb_smooth( in vec3 c )
@@ -31,8 +28,8 @@ vec4 range(vec3 p)
 
     // Sinewave effect
     //										  V this cosine with floor acts as a toggle
-    float xampl = sin(t*1.3)*0.4*floor(cos(t*0.4)+1.0);
-    float yampl = sin(t*1.3)*0.4-(floor(-cos(t*0.4)+1.0)*0.3);
+    float xampl = sin(t*1.3)*0.4;//*floor(cos(t*0.4)+1.0);
+    float yampl = sin(t*1.3)*0.4;//-(floor(-cos(t*0.4)+1.0)*0.3);
 
     p.x += cos((max(-2.0+p.z-camPos.z,0.)))*xampl-xampl;
     p.y += sin((max(-2.0+p.z-camPos.z,0.)))*yampl;
@@ -88,12 +85,12 @@ void main()
 
     camPos = vec3(0.5, 0.5, t*1.0);
 
-    ld = normalize(vec3(0.0, sin(t*0.8)*0.1, cos(t*0.8)*0.5));
+    ld = normalize(vec3(0.0, 0.0, 1.0));
 
     // This is the raymarching vector. It is calculated by interpreting the uv coordinates as angles, and thus rotating
     // the ld (lookdirection) vector by the given angle. It is then used as the direction for the ray to march in.
     // With this projection you can see the full 360° around you. Try changing the zoom to something like 1.5
-    float zoom = 0.6;
+    float zoom = pow(2,zoom);
     vec3 n = normalize(vec3(sin(uv.x*3.1415*zoom),sin(uv.y*3.1415*zoom) ,ld.z*cos(uv.x*3.1415*zoom)*cos(uv.y*3.1415*zoom)));
 
     vec4 rangeret = march(camPos, n); // March rays from the camera in the direction of n
@@ -105,6 +102,5 @@ void main()
     vec3 p = camPos + n*d;
     float angle = acos(dot(normal, n)/length(normal)*length(n));
 
-
-    colorOut = vec4(hsv2rgb_smooth(lerp(vec3(d*0.1 + t*0.01, 2.0, max(1.0 - log(d),0.0)),vec3(d*0.1 + (t+120.0)*0.01 , 2.0, max(1.0 - log(d),0.0)),cos(angle/10.0))),1.0);
+    colorOut = vec4(hsv2rgb_smooth(lerp(vec3(length(vec2(uv.x*3.1415*zoom, uv.y*3.1415*zoom))+d*0.1 + t*0.01, 2.0, max(1.0 - log(d),0.0)),vec3(d*0.01 + (t+120.0)*0.01 , 2.0, max(1.0 - log(d),0.0)),cos(angle/10.0))),1.0);
 }

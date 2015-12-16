@@ -7,17 +7,20 @@ find_package(PkgConfig REQUIRED)
 find_package (OpenGL REQUIRED)
 find_package(GLEW REQUIRED)
 
+
 pkg_search_module(GLFW REQUIRED glfw3)
 include_directories(${GLFW_INCLUDE_DIRS}
-        ${GLEW_INCLUDE_DIRS})
+        ${GLEW_INCLUDE_DIRS}
+        /usr/include)
 
 
 set(SOURCE_FILES src/main.cpp
-        src/timeline.cpp src/shader.cpp src/shader.h)
+        src/timeline.cpp src/shader.cpp src/shader.h src/keyframe.cpp src/keyframe.h src/keytrack.cpp src/keytrack.h src/TwEventGLFW3.cpp src/TwEventGLFW3.h)
 
 add_executable(cockamamie ${SOURCE_FILES})
 
 target_link_libraries(cockamamie
         ${GLFW_LIBRARIES}
         ${OPENGL_LIBRARIES}
-        ${GLEW_LIBRARIES})
+        ${GLEW_LIBRARIES}
+        /usr/lib/libAntTweakBar.so)

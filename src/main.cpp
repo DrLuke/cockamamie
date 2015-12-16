@@ -1,16 +1,17 @@
 #include <GL/glew.h>
 #include <GLFW/glfw3.h>
-#include <stdio.h>
+
 #include <iostream>
-#include <sstream>
-#include <fstream>
-#include <vector>
+
 #include <string.h>
+
+#include <AntTweakBar.h>
 
 
 //---
 #include "timeline.h"
 #include "shader.h"
+#include "TwEventGLFW3.h"
 //---
 
 using namespace std;
@@ -92,6 +93,29 @@ int main(void)
     /* Make the window's context current */
     glfwMakeContextCurrent(window);
 
+    // Start AntTweakBar
+    TwInit(TW_OPENGL, NULL);
+
+    // Set GLFW event callbacks
+    // - Redirect window size changes to the callback function WindowSizeCB
+    //glfwSetWindowSizeCallback(WindowSizeCB);
+    // - Directly redirect GLFW mouse button events to AntTweakBar
+    glfwSetMouseButtonCallback(window, (GLFWmousebuttonfun)TwEventMouseButtonGLFW3);
+    // - Directly redirect GLFW mouse position events to AntTweakBar
+    glfwSetCursorPosCallback(window, (GLFWcursorposfun)TwEventCursorPosGLFW3);
+    // - Directly redirect GLFW mouse wheel events to AntTweakBar
+    glfwSetScrollCallback(window, (GLFWscrollfun)TwEventScrollGLFW3);
+    // - Directly redirect GLFW key events to AntTweakBar
+    glfwSetKeyCallback(window, (GLFWkeyfun)TwEventKeyGLFW3);
+    // - Directly redirect GLFW char events to AntTweakBar
+    glfwSetCharCallback(window, (GLFWcharfun)TwEventCharModsGLFW3);
+
+    TwBar *myBar;
+    myBar = TwNewBar("NameOfMyTweakBar");
+    double myVar = 1.0f;
+    TwAddVarRW(myBar, "speed", TW_TYPE_DOUBLE, &myVar,
+               " label='Rot speed' min=0.2 max=4 step=0.01 keyIncr=w keyDecr=s help='Rotation speed (turns/second)' ");
+
     // start GLEW extension handler
     glewExperimental = GL_TRUE;
     glewInit ();
@@ -110,7 +134,9 @@ int main(void)
                               true);
     }
     else
+    {
         cout << "glDebugMessageCallback not available" << endl;
+    }
 
     // Set up timeline
     timeline* tim = new timeline();
@@ -136,13 +162,6 @@ int main(void)
     glEnableVertexAttribArray (0);
     glBindBuffer (GL_ARRAY_BUFFER, vbo);
     glVertexAttribPointer (0, 3, GL_FLOAT, GL_FALSE, 0, NULL);
-
-    const char* vertex_shader =
-            "#version 150\n"
-            "in vec3 woop;"
-            "void main() {"
-            "  gl_Position = vec4(woop,1.0);"
-            "}";
 
     shader* defaultShader = new shader("/home/drluke/prog/cockamamie/frag.glsl");
 
@@ -173,7 +192,8 @@ int main(void)
         glLoadIdentity();
         //glRotatef((float) glfwGetTime() * 50.f, 0.f, 0.f, 1.f);
 
-        glfwGetWindowSize(window, &width, &height);
+        //glfwGetWindowSize(window, &width, &height);
+
 
         GLint loc = glGetUniformLocation(defaultShader->getShaderProgram(), "res");
         if(loc != -1)
@@ -184,6 +204,11 @@ int main(void)
         if(loc != -1)
         {
             glUniform1f(loc, (GLfloat)tim->getTime());
+        }
+        loc = glGetUniformLocation(defaultShader->getShaderProgram(), "zoom");
+        if(loc != -1)
+        {
+            glUniform1f(loc, (GLfloat)myVar);
         }
 
         glUseProgram (defaultShader->getShaderProgram());
@@ -199,6 +224,9 @@ int main(void)
             std::cout << infoLog << std::endl;
         }*/
 
+        TwWindowSize(width, height);
+        TwDraw();
+
         /* Swap front and back buffers */
         glfwSwapBuffers(window);
 
@@ -206,6 +234,7 @@ int main(void)
         glfwPollEvents();
     }
 
+    TwTerminate();
     glfwTerminate();
     return 0;
 }
