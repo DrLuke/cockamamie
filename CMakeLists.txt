@@ -12,7 +12,8 @@ include_directories(${GLFW_INCLUDE_DIRS}
         ${GLEW_INCLUDE_DIRS})
 
 
-set(SOURCE_FILES main.cpp)
+set(SOURCE_FILES src/main.cpp
+        src/timeline.cpp src/shader.cpp src/shader.h)
 
 add_executable(cockamamie ${SOURCE_FILES})
 

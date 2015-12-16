@@ -7,6 +7,12 @@
 #include <vector>
 #include <string.h>
 
+
+//---
+#include "timeline.h"
+#include "shader.h"
+//---
+
 using namespace std;
 
 void APIENTRY openglCallbackFunction(GLenum source,
@@ -15,12 +21,14 @@ void APIENTRY openglCallbackFunction(GLenum source,
                                      GLenum severity,
                                      GLsizei length,
                                      const GLchar* message,
-                                     const void* userParam){
+                                     const void* userParam)
+{
 
     cout << "---------------------opengl-callback-start------------" << endl;
     cout << "message: "<< message << endl;
     cout << "type: ";
-    switch (type) {
+    switch (type)
+    {
         case GL_DEBUG_TYPE_ERROR:
             cout << "ERROR";
             break;
@@ -46,7 +54,8 @@ void APIENTRY openglCallbackFunction(GLenum source,
 
     cout << "id: " << id << endl;
     cout << "severity: ";
-    switch (severity){
+    switch (severity)
+    {
         case GL_DEBUG_SEVERITY_LOW:
             cout << "LOW";
             break;
@@ -87,9 +96,9 @@ int main(void)
     glewExperimental = GL_TRUE;
     glewInit ();
 
+    // Set up opengl debug output
     glEnable(GL_DEBUG_OUTPUT);
     if(glDebugMessageCallback){
-        cout << "Register OpenGL debug callback " << endl;
         glEnable(GL_DEBUG_OUTPUT_SYNCHRONOUS);
         glDebugMessageCallback(openglCallbackFunction, nullptr);
         GLuint unusedIds = 0;
@@ -103,6 +112,10 @@ int main(void)
     else
         cout << "glDebugMessageCallback not available" << endl;
 
+    // Set up timeline
+    timeline* tim = new timeline();
+
+    // Set up Vertices for quad
     float points[] = {
             -1.0f,  1.0f,  0.0f,
             -1.0f, -1.0f,  0.0f,
@@ -131,36 +144,21 @@ int main(void)
             "  gl_Position = vec4(woop,1.0);"
             "}";
 
-    std::ifstream t("/home/drluke/prog/cockamamie/frag.glsl");
-    std::stringstream buffer;
-    buffer << t.rdbuf();
-    std::string shaderString = buffer.str();
-    const char* fragment_shader = shaderString.c_str();
+    shader* defaultShader = new shader("/home/drluke/prog/cockamamie/frag.glsl");
 
-    GLuint vs = glCreateShader (GL_VERTEX_SHADER);
-    glShaderSource (vs, 1, &vertex_shader, NULL);
-    glCompileShader (vs);
+    /*GLint maxLength = 30000;
 
-    GLuint fs = glCreateShader (GL_FRAGMENT_SHADER);
-    glShaderSource (fs, 1, &fragment_shader, NULL);
-    glCompileShader (fs);
-
-    GLuint shader_program = glCreateProgram ();
-    glAttachShader (shader_program, fs);
-    glAttachShader (shader_program, vs);
-    glLinkProgram (shader_program);
-
-    GLint maxLength = 0;
     glGetProgramiv(shader_program, GL_INFO_LOG_LENGTH, &maxLength);
     char infoLog[maxLength];
     glGetProgramInfoLog(shader_program, maxLength, &maxLength, &infoLog[0]);
 
-    std::cout << infoLog << std::endl;
+    std::cout << infoLog << std::endl;*/
 
     /* Loop until the user closes the window */
     while (!glfwWindowShouldClose(window))
     {
-
+        tim->work(); // Tick timeline
+        defaultShader->updateShader();
 
         float ratio;
         int width, height;
@@ -177,30 +175,29 @@ int main(void)
 
         glfwGetWindowSize(window, &width, &height);
 
-        GLint loc = glGetUniformLocation(shader_program, "res");
+        GLint loc = glGetUniformLocation(defaultShader->getShaderProgram(), "res");
         if(loc != -1)
         {
             glUniform2f(loc, (float)width, (float)height);
         }
-        loc = glGetUniformLocation(shader_program, "t");
+        loc = glGetUniformLocation(defaultShader->getShaderProgram(), "t");
         if(loc != -1)
         {
-            glUniform1f(loc, glfwGetTime());
+            glUniform1f(loc, (GLfloat)tim->getTime());
         }
 
-
-        glUseProgram (shader_program);
+        glUseProgram (defaultShader->getShaderProgram());
         glBindVertexArray (vao);
         // draw points 0-3 from the currently bound VAO with current in-use shader
         glDrawArrays (GL_TRIANGLES, 0, 3);
         glDrawArrays (GL_TRIANGLES, 3, 5);
 
-        glGetProgramiv(shader_program, GL_INFO_LOG_LENGTH, &maxLength);
+        /*glGetProgramiv(shader_program, GL_INFO_LOG_LENGTH, &maxLength);
         glGetProgramInfoLog(shader_program, maxLength, &maxLength, &infoLog[0]);
         if(maxLength)
         {
             std::cout << infoLog << std::endl;
-        }
+        }*/
 
         /* Swap front and back buffers */
         glfwSwapBuffers(window);
