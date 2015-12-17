@@ -7,6 +7,8 @@
 
 #include <AntTweakBar.h>
 
+#include <SOIL.h>
+
 
 //---
 #include "timeline.h"
@@ -93,6 +95,9 @@ int main(void)
     /* Make the window's context current */
     glfwMakeContextCurrent(window);
 
+    glEnable(GL_BLEND);
+    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+
     // Start AntTweakBar
     TwInit(TW_OPENGL, NULL);
 
@@ -121,7 +126,7 @@ int main(void)
     glewInit ();
 
     // Set up opengl debug output
-    glEnable(GL_DEBUG_OUTPUT);
+    //glEnable(GL_DEBUG_OUTPUT);
     if(glDebugMessageCallback){
         glEnable(GL_DEBUG_OUTPUT_SYNCHRONOUS);
         glDebugMessageCallback(openglCallbackFunction, nullptr);
@@ -139,31 +144,14 @@ int main(void)
     }
 
     // Set up timeline
-    timeline* tim = new timeline();
+    timeline* tim = new timeline(window);
 
-    // Set up Vertices for quad
-    float points[] = {
-            -1.0f,  1.0f,  0.0f,
-            -1.0f, -1.0f,  0.0f,
-             1.0f, -1.0f,  0.0f,
-            -1.0f,  1.0f,  0.0f,
-             1.0f, -1.0f,  0.0f,
-             1.0f,  1.0f,  0.0f
-    };
-
-    GLuint vbo = 0;
-    glGenBuffers (1, &vbo);
-    glBindBuffer (GL_ARRAY_BUFFER, vbo);
-    glBufferData (GL_ARRAY_BUFFER, 18 * sizeof (float), points, GL_STATIC_DRAW);
-
-    GLuint vao = 0;
-    glGenVertexArrays (1, &vao);
-    glBindVertexArray (vao);
-    glEnableVertexAttribArray (0);
-    glBindBuffer (GL_ARRAY_BUFFER, vbo);
-    glVertexAttribPointer (0, 3, GL_FLOAT, GL_FALSE, 0, NULL);
 
     shader* defaultShader = new shader("/home/drluke/prog/cockamamie/frag.glsl");
+
+    int width, height;
+    unsigned char* image =
+            SOIL_load_image("/home/drluke/prog/cockamamie/tex.jpg", &width, &height, 0, SOIL_LOAD_RGB);
 
     /*GLint maxLength = 30000;
 
@@ -194,6 +182,7 @@ int main(void)
 
         //glfwGetWindowSize(window, &width, &height);
 
+        defaultShader->render();
 
         GLint loc = glGetUniformLocation(defaultShader->getShaderProgram(), "res");
         if(loc != -1)
@@ -211,18 +200,7 @@ int main(void)
             glUniform1f(loc, (GLfloat)myVar);
         }
 
-        glUseProgram (defaultShader->getShaderProgram());
-        glBindVertexArray (vao);
-        // draw points 0-3 from the currently bound VAO with current in-use shader
-        glDrawArrays (GL_TRIANGLES, 0, 3);
-        glDrawArrays (GL_TRIANGLES, 3, 5);
-
-        /*glGetProgramiv(shader_program, GL_INFO_LOG_LENGTH, &maxLength);
-        glGetProgramInfoLog(shader_program, maxLength, &maxLength, &infoLog[0]);
-        if(maxLength)
-        {
-            std::cout << infoLog << std::endl;
-        }*/
+        tim->render();
 
         TwWindowSize(width, height);
         TwDraw();

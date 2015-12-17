@@ -16,6 +16,8 @@ private:
     std::string filepath;
     std::string shaderstring;
 
+    GLuint vbo;
+    GLuint vao;
     GLuint shaderProgram;
 
     std::string readFile(std::string pathtofile);
@@ -27,6 +29,7 @@ public:
     ~shader();
 
     void updateShader();
+    void render();
 
     GLuint getShaderProgram() const
     {
