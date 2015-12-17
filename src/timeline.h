@@ -8,16 +8,37 @@
 #include <GL/glew.h>
 #include <GLFW/glfw3.h>
 #include <iostream>
+#include <list>
+#include <tuple>
+#include <vector>
+#include <AntTweakBar.h>
+#include <math.h>
+
+#include "shader.h"
+#include "keytrack.h"
+
+
 
 class timeline {
 private:
     double time;
+    double prevTime;
+    double timeScale;
+    double timelineStart;
+    double timelineEnd;
     bool running;
     GLFWwindow* window;
 
     GLuint vbo;
     GLuint vao;
     GLuint shaderProgram;
+
+    std::vector<std::tuple<shader, std::vector<keytrack>*, double, double>> scenes;
+    std::vector<keytrack>* curKeytracks;
+    int currentScene;
+
+
+    TwBar *trackControls;
 
     void compileShader();
     void drawQuad(float x1, float y1, float x2, float y2, float r, float g, float b, float a);

@@ -16,7 +16,7 @@ include_directories(${GLFW_INCLUDE_DIRS}
 
 
 set(SOURCE_FILES src/main.cpp
-        src/timeline.cpp src/shader.cpp src/shader.h src/TwEventGLFW3.cpp src/TwEventGLFW3.h)
+        src/timeline.cpp src/shader.cpp src/shader.h src/TwEventGLFW3.cpp src/TwEventGLFW3.h src/keytrack.cpp src/keytrack.h)
 
 add_executable(cockamamie ${SOURCE_FILES})
 
