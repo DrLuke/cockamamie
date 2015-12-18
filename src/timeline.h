@@ -17,8 +17,11 @@
 #include "shader.h"
 #include "keytrack.h"
 
-void TW_CALL setCallback(const void* data, void* kt);
-void TW_CALL getCallback(void *value, void* kt);
+void TW_CALL setValCallback(const void *value, void *kt);
+void TW_CALL GetValCallback(void *value, void *kt);
+
+void TW_CALL setKeyframeCallback(const void *value, void *kt);
+void TW_CALL GetKeyframeCallback(void *value, void *kt);
 
 class timeline {
 private:

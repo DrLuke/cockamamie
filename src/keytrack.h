@@ -8,6 +8,7 @@
 #include <list>
 #include <tuple>
 #include <math.h>
+#include <vector>
 #include <AntTweakBar.h>
 
 class keytrack
@@ -22,31 +23,25 @@ private:
     double time;
 
     bool stop;
+    double rqtime;
 
 public:
     keytrack(std::string name, int veclen);
     ~keytrack();
 
-    std::tuple<double, float, float, float, float, std::string> getNextKeyframeTuple(double time);
-    std::tuple<double, float, float, float, float, std::string> getPrevKeyframeTuple(double time);
+    void setKeyframe(int* val);
+    void getKeyframe(int* val);
+    int getMaxKeyframes();
 
     void setValue(float* val);
-    void TW_CALL getValue(float* val);
+    void getValue(float* val);
 
-    void TW_CALL toggleKeyframe(double time);
-    int TW_CALL editKeyframe(double time, float a, float b=nan(""), float c=nan(""), float d=nan(""), std::string="");
-
-    void getInterpvalues(double time);
-
+    void addKeyframe(double time, float* val, std::string inpstring="");
+    void getKeyframeTimes(std::vector<double>* valVec);
 
     int getVeclen() const
     {
         return veclen;
-    }
-
-    void setVeclen(int veclen)
-    {
-        keytrack::veclen = veclen;
     }
 
     const std::string &getName() const
@@ -72,6 +67,16 @@ public:
     void setStop(bool stop)
     {
         keytrack::stop = stop;
+    }
+
+    double getRqtime() const
+    {
+        return rqtime;
+    }
+
+    void setRqtime(double rqtime)
+    {
+        keytrack::rqtime = rqtime;
     }
 };
 

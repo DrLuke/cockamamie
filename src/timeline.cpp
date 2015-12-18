@@ -93,6 +93,15 @@ timeline::~timeline()
 void timeline::work()
 {
     this->prevScene = this->currentScene;
+    for(std::vector<keytrack>::iterator it = this->curKeytracks->begin(); it != this->curKeytracks->end(); ++it)
+    {
+        keytrack *kt = &(*it);
+        if(kt->isStop())
+        {
+            this->running = false;
+            kt->setStop(false);
+        }
+    }
     if(this->running)
     {
         double tempTime = glfwGetTime();
@@ -130,49 +139,99 @@ void timeline::work()
     for(std::vector<keytrack>::iterator it = this->curKeytracks->begin(); it != this->curKeytracks->end(); ++it)
     {
         keytrack *kt = &(*it);
+        kt->setTime(this->time);
         if(this->currentScene != this->prevScene)
         {
             std::string trackname = kt->getName();
-            kt->setTime(this->time);
 
             std::ostringstream stringStream;
             stringStream << "label='Val" << trackname << "' step=0.1 group=" << trackname.c_str() << " ";
 
-
             stringStream.str("");
             stringStream.clear();
-            stringStream << "label='Value' step=0.1 group=" << trackname.c_str() << " ";
+            stringStream << "label='Value' group=" << trackname.c_str() << " ";
 
-            TwAddVarCB(this->keyframeControls, NULL, TW_TYPE_FLOAT, &setCallback, &getCallback, kt,
-                       stringStream.str().c_str());
+            switch(kt->getVeclen())
+            {
+                case 1:
+                default:
+                    TwAddVarCB(this->keyframeControls, NULL, TW_TYPE_FLOAT, &setValCallback, &GetValCallback, kt,
+                               stringStream.str().c_str());
+                    break;
 
+                case 2:
+                    TwAddVarCB(this->keyframeControls, NULL, TW_TYPE_FLOAT, &setValCallback, &GetValCallback, kt,
+                               stringStream.str().c_str());
+                    break;
+
+                case 3:
+                    TwAddVarCB(this->keyframeControls, NULL, TW_TYPE_COLOR3F, &setValCallback, &GetValCallback, kt,
+                               stringStream.str().c_str());
+                    break;
+
+                case 4:
+                    TwAddVarCB(this->keyframeControls, NULL, TW_TYPE_COLOR4F, &setValCallback, &GetValCallback, kt,
+                               stringStream.str().c_str());
+                    break;
+            }
+
+
+            //std::cout << keyframecount << std::endl;
             stringStream.str("");
             stringStream.clear();
-            stringStream << "label='Keyframe' step=0.1 group=" << trackname.c_str() << " ";
+            //stringStream << "label='Keyframe' min=" << keyframemin << " max=" << keyframemax << " step=0.1 group=" << trackname.c_str() << " ";
+            stringStream << "label='Keyframe' step=1 group=" << trackname.c_str() << " ";
 
-            TwAddVarRW(this->keyframeControls, NULL, TW_TYPE_INT32, &this->timelineStart,
+            TwAddVarCB(this->keyframeControls, NULL, TW_TYPE_INT32, &setKeyframeCallback, &GetKeyframeCallback, kt,
                        stringStream.str().c_str());
             i++;
         }
-        if(kt->isStop())
+
+        /*
+        int keyframecount = kt->getMaxKeyframes();
+        int keyframemin = -1;
+        int keyframemax = -1;
+
+        if(keyframecount > 0)
         {
-            this->running = false;
+            keyframemin = 0;
+            keyframemax = keyframecount - 1;
+        }*/
+
+
+
+        if(!isnan(kt->getRqtime()))
+        {
+            this->setTime(kt->getRqtime());
+            kt->setRqtime(nan(""));
         }
-        kt->setStop(false);
     }
 }
 
-void TW_CALL setCallback(const void* data, void* kt)
+void TW_CALL setValCallback(const void *value, void *kt)
 {
     keytrack* k = (keytrack*)kt;
     k->setStop(true);
-    k->setValue((float*)data);
+    k->setValue((float*) value);
 }
 
-void TW_CALL getCallback(void *value, void* kt)
+void TW_CALL GetValCallback(void *value, void *kt)
 {
     keytrack* k = (keytrack *)kt;
     k->getValue((float*)value);
+}
+
+void TW_CALL setKeyframeCallback(const void *value, void *kt)
+{
+    keytrack* k = (keytrack*)kt;
+    k->setStop(true);
+    k->setKeyframe((int*) value);
+}
+
+void TW_CALL GetKeyframeCallback(void *value, void *kt)
+{
+    keytrack* k = (keytrack *)kt;
+    k->getKeyframe((int*)value);
 }
 
 void timeline::compileShader()
@@ -256,10 +315,13 @@ void timeline::render()
     float pixelsizeh = (2.0f/(float)height);
     float pixelsizew = (2.0f/(float)width);
 
+
     #define TRACKHEIGHT 20.0f
     float lineheight = pixelsizeh*TRACKHEIGHT;
-    for(int i = 0; i < curKeytracks->size(); i++)
+    int i = 0;
+    for(std::vector<keytrack>::iterator it = this->curKeytracks->begin(); it != this->curKeytracks->end(); ++it)
     {
+        //Draw alternating lanes
         if(i%2)
         {
             this->drawQuad(-1.0f,-1.0f+(float)i*lineheight, 1.0f,-1.0f+(float)(i+1)*lineheight, 0.3f,0.3f,0.4f,0.6f);
@@ -268,12 +330,34 @@ void timeline::render()
         {
             this->drawQuad(-1.0f,-1.0f+(float)i*lineheight, 1.0f,-1.0f+(float)(i+1)*lineheight, 0.3f,0.3f,0.4f,0.8f);
         }
+        // Draw keyframes
+        std::vector<double> keyframeTimes;
+        it->getKeyframeTimes(&keyframeTimes);
 
+        for(std::vector<double>::iterator tit = keyframeTimes.begin(); tit != keyframeTimes.end(); ++tit)
+        {
+            float progress = (float)round(((*tit-this->timelineStart)/(this->timelineEnd - this->timelineStart)*2.0) * float(width));
+            this->drawQuad(-1.0f + progress/(float)width,-1.0+(float)i*lineheight, -1.0f + pixelsizew + progress/(float)width, -1.0f+(float)(i+1)*lineheight, 0.1f,0.1f,0.8f,0.8f);
+        }
+        i++;
     }
 
-    // Time marker
+    // Scene transitions
     float h = (float)curKeytracks->size();
-    float progress = (float)round(((this->time-this->timelineStart)/(this->timelineEnd - this->timelineStart)*2.0) * float(width));
+    float sceneStart, sceneEnd;
+    std::tie(std::ignore, std::ignore, sceneStart, sceneEnd) = this->scenes[0];
+    float progress = (float)round(((sceneStart-timelineStart)/(this->timelineEnd - this->timelineStart)*2.0) * float(width));
+    this->drawQuad(-1.0f + progress/(float)width,-1.0, -1.0f + pixelsizew + progress/(float)width, -1.0f + h*lineheight, 0.8f,0.8f,0.1f,1.0f);
+    for(std::vector<std::tuple<shader*, std::vector<keytrack>*, double, double>>::iterator it = this->scenes.begin(); it != this->scenes.end(); ++it)
+    {
+        std::tie(std::ignore, std::ignore, sceneStart, sceneEnd) = *it;
+        progress = (float)round(((sceneEnd-timelineStart)/(this->timelineEnd - this->timelineStart)*2.0) * float(width));
+        this->drawQuad(-1.0f + progress/(float)width,-1.0, -1.0f + pixelsizew + progress/(float)width, -1.0f + h*lineheight, 0.8f,0.8f,0.1f,0.8f);
+    }
+
+
+    // Time marker
+    progress = (float)round(((this->time-this->timelineStart)/(this->timelineEnd - this->timelineStart)*2.0) * float(width));
     this->drawQuad(-1.0f + progress/(float)width,-1.0, -1.0f + pixelsizew + progress/(float)width, -1.0f + h*lineheight, 0.8f,0.1f,0.1f,0.8f);
 
 
