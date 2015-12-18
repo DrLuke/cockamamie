@@ -121,7 +121,9 @@ int main(void)
     double myVar = 1.0f;
     TwAddVarRW(myBar, "speed", TW_TYPE_DOUBLE, &myVar,
                " label='Rot speed' min=0.2 max=4 step=0.01 keyIncr=w keyDecr=s help='Rotation speed (turns/second)' ");
-
+    float glassColor[4] = {0, 1, 1, 0.2f}; // transparent cyan
+// ...
+    TwAddVarRW(myBar, "Glass", TW_TYPE_COLOR4F, &glassColor, "");
     // start GLEW extension handler
     glewExperimental = GL_TRUE;
     glewInit ();
@@ -183,7 +185,7 @@ int main(void)
 
         //glfwGetWindowSize(window, &width, &height);
 
-        defaultShader->render();
+        //defaultShader->render();
 
         GLint loc = glGetUniformLocation(defaultShader->getShaderProgram(), "res");
         if(loc != -1)

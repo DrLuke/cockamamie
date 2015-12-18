@@ -8,6 +8,7 @@ timeline::timeline(GLFWwindow* window) : window(window)
 {
     this->time = glfwGetTime();
     this->running = true;
+    this->currentScene = -9999;
 
     this->compileShader();
 
@@ -38,6 +39,7 @@ timeline::timeline(GLFWwindow* window) : window(window)
     glVertexAttribPointer (posAttrib, 2, GL_FLOAT, GL_FALSE, 6*sizeof(float), (void*)(0*sizeof(float)));
     glVertexAttribPointer (colAttrib, 4, GL_FLOAT, GL_FALSE, 6*sizeof(float), (void*)(2*sizeof(float)));
 
+    this->keyframeControls = TwNewBar("Keyframe Controls");
 
     this->trackControls = TwNewBar("Timeline Controls");
     this->timeScale = 1.0;
@@ -49,7 +51,7 @@ timeline::timeline(GLFWwindow* window) : window(window)
     TwAddVarRW(this->trackControls, "time run", TW_TYPE_BOOL8, &this->running,
                " label='Run' keyIncr=SPACE help='Run or Pause timeline (bool)' ");
     TwAddVarRW(this->trackControls, "time fine", TW_TYPE_DOUBLE, &this->time,
-               " label='Time fine' step=0.01 keyIncr=w keyDecr=s help='Fine adjustment of time variable (seconds)' ");
+               " label='Time fine' step=0.01 keyIncr=w keyDecr=s help='Fine adjustment of time variable (seconds)' group=Time ");
     TwAddVarRW(this->trackControls, "time coarse", TW_TYPE_DOUBLE, &this->time,
                " label='Time coarse' step=0.1 keyIncr=w keyDecr=s help='Coarse adjustment of time variable (seconds)' group=Time ");
 
@@ -57,29 +59,30 @@ timeline::timeline(GLFWwindow* window) : window(window)
                " label='Timeline Start' step=0.1 keyIncr=w keyDecr=s help='Start time of timeline display (seconds)' group=Timeline");
     TwAddVarRW(this->trackControls, "timelineEnd", TW_TYPE_DOUBLE, &this->timelineEnd,
                " label='Timeline End' step=0.1 keyIncr=w keyDecr=s help='End time of timeline display (seconds)' group=Timeline");
+    TwAddVarRO(this->trackControls, "sceneindicator", TW_TYPE_INT32, &this->currentScene,
+               " label='Current Scene' help='End time of timeline display (seconds)' group=Timeline");
 
     std::vector<keytrack>* newVec = new std::vector<keytrack>();
-    std::tuple<shader, std::vector<keytrack>*, double, double> newScene = std::make_tuple (shader("home/drluke/prog/cockamamie/frag.glsl"), newVec, 0.0, 10.0);
+    std::tuple<shader*, std::vector<keytrack>*, double, double> newScene = std::make_tuple (new shader("/home/drluke/prog/cockamamie/frag.glsl"), newVec, 0.0, 10.0);
     scenes.push_back(newScene);
 
     std::tie(std::ignore, this->curKeytracks, std::ignore, std::ignore) = this->scenes[0];
 
-    curKeytracks->push_back(keytrack(1, "Testname1"));
-    curKeytracks->push_back(keytrack(1, "Testname2"));
-    curKeytracks->push_back(keytrack(3, "Testname3"));
-    curKeytracks->push_back(keytrack(1, "Testname4"));
-    curKeytracks->push_back(keytrack(2, "Testname5"));
+    curKeytracks->push_back(keytrack("Testname1", 1));
+    curKeytracks->push_back(keytrack("Testname2", 2));
+    curKeytracks->push_back(keytrack("Testname3", 3));
+    curKeytracks->push_back(keytrack("Testname4", 4));
+    curKeytracks->push_back(keytrack("Testname5", 1));
 
     newVec = new std::vector<keytrack>();
-    newScene = std::make_tuple (shader("home/drluke/prog/cockamamie/frag.glsl"), newVec, 10.0, 30.0);
+    newScene = std::make_tuple (new shader("/home/drluke/prog/cockamamie/frag2.glsl"), newVec, 10.0, 30.0);
     scenes.push_back(newScene);
 
     std::tie(std::ignore, this->curKeytracks, std::ignore, std::ignore) = this->scenes[1];
 
-    curKeytracks->push_back(keytrack(1, "Testname1"));
-    curKeytracks->push_back(keytrack(1, "Testname2"));
-    curKeytracks->push_back(keytrack(3, "Testname3"));
-
+    curKeytracks->push_back(keytrack("Testname1", 1));
+    curKeytracks->push_back(keytrack("Testname2", 2));
+    curKeytracks->push_back(keytrack("Testname3", 3));
 
 }
 
@@ -89,6 +92,7 @@ timeline::~timeline()
 
 void timeline::work()
 {
+    this->prevScene = this->currentScene;
     if(this->running)
     {
         double tempTime = glfwGetTime();
@@ -101,7 +105,7 @@ void timeline::work()
     }
 
     int i = 0;
-    for(std::vector<std::tuple<shader, std::vector<keytrack>*, double, double>>::iterator it = this->scenes.begin(); it != this->scenes.end(); ++it)
+    for(std::vector<std::tuple<shader*, std::vector<keytrack>*, double, double>>::iterator it = this->scenes.begin(); it != this->scenes.end(); ++it)
     {
         float start = 0.0;
         float end = 0.0;
@@ -113,8 +117,62 @@ void timeline::work()
 
         i++;
     }
-    std::tie(std::ignore, this->curKeytracks, std::ignore, std::ignore) = this->scenes[this->currentScene];
+    double sceneStart, sceneEnd;
 
+    std::tie(this->curShader, this->curKeytracks, sceneStart, sceneEnd) = this->scenes[this->currentScene];
+
+    if(this->currentScene != prevScene)
+    {
+        TwRemoveAllVars(this->keyframeControls);
+    }
+
+    i = 0;
+    for(std::vector<keytrack>::iterator it = this->curKeytracks->begin(); it != this->curKeytracks->end(); ++it)
+    {
+        keytrack *kt = &(*it);
+        if(this->currentScene != this->prevScene)
+        {
+            std::string trackname = kt->getName();
+            kt->setTime(this->time);
+
+            std::ostringstream stringStream;
+            stringStream << "label='Val" << trackname << "' step=0.1 group=" << trackname.c_str() << " ";
+
+
+            stringStream.str("");
+            stringStream.clear();
+            stringStream << "label='Value' step=0.1 group=" << trackname.c_str() << " ";
+
+            TwAddVarCB(this->keyframeControls, NULL, TW_TYPE_FLOAT, &setCallback, &getCallback, kt,
+                       stringStream.str().c_str());
+
+            stringStream.str("");
+            stringStream.clear();
+            stringStream << "label='Keyframe' step=0.1 group=" << trackname.c_str() << " ";
+
+            TwAddVarRW(this->keyframeControls, NULL, TW_TYPE_INT32, &this->timelineStart,
+                       stringStream.str().c_str());
+            i++;
+        }
+        if(kt->isStop())
+        {
+            this->running = false;
+        }
+        kt->setStop(false);
+    }
+}
+
+void TW_CALL setCallback(const void* data, void* kt)
+{
+    keytrack* k = (keytrack*)kt;
+    k->setStop(true);
+    k->setValue((float*)data);
+}
+
+void TW_CALL getCallback(void *value, void* kt)
+{
+    keytrack* k = (keytrack *)kt;
+    k->getValue((float*)value);
 }
 
 void timeline::compileShader()
@@ -164,13 +222,36 @@ void timeline::compileShader()
 
 void timeline::render()
 {
+    int width, height;
+    glfwGetWindowSize(this->window, &width, &height);
+
+    this->curShader->updateShader();
+    this->curShader->render();
+
+
+    GLint loc = glGetUniformLocation(this->curShader->getShaderProgram(), "res");
+    if(loc != -1)
+    {
+        glUniform2f(loc, (float)width, (float)height);
+    }
+    loc = glGetUniformLocation(this->curShader->getShaderProgram(), "t");
+    if(loc != -1)
+    {
+        glUniform1f(loc, (GLfloat)this->getTime());
+    }
+    loc = glGetUniformLocation(this->curShader->getShaderProgram(), "zoom");
+    if(loc != -1)
+    {
+        glUniform1f(loc, (GLfloat)1.0);
+    }
+
+
 
     glBindBuffer(GL_ARRAY_BUFFER, this->vbo);
     glUseProgram (this->shaderProgram);
     glBindVertexArray(this->vao);
 
-    int width, height;
-    glfwGetWindowSize(this->window, &width, &height);
+
 
     float pixelsizeh = (2.0f/(float)height);
     float pixelsizew = (2.0f/(float)width);
@@ -202,11 +283,11 @@ void timeline::drawQuad(float x1, float y1, float x2, float y2, float r, float g
 {
     float vertices[] = {
             x1, y2, r, g, b, a,  // Vertex 1 (X, Y)
-            x2, y1, r, g, b, a,  // Vertex 3 (X, Y)
-            x2, y2, r, g, b, a,  // Vertex 4 (X, Y)
-            x1, y1, r, g, b, a,  // Vertex 2 (X, Y)
-            x1, y2, r, g, b, a,  // Vertex 4 (X, Y)
-            x2, y1, r, g, b, a   // Vertex 2 (X, Y)
+            x2, y1, r, g, b, a,  // Vertex 2 (X, Y)
+            x2, y2, r, g, b, a,  // Vertex 3 (X, Y)
+            x1, y1, r, g, b, a,  // Vertex 4 (X, Y)
+            x1, y2, r, g, b, a,  // Vertex 5 (X, Y)
+            x2, y1, r, g, b, a   // Vertex 6 (X, Y)
     };
 
     glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW);

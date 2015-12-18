@@ -17,7 +17,8 @@
 #include "shader.h"
 #include "keytrack.h"
 
-
+void TW_CALL setCallback(const void* data, void* kt);
+void TW_CALL getCallback(void *value, void* kt);
 
 class timeline {
 private:
@@ -33,15 +34,21 @@ private:
     GLuint vao;
     GLuint shaderProgram;
 
-    std::vector<std::tuple<shader, std::vector<keytrack>*, double, double>> scenes;
+    std::vector<std::tuple<shader*, std::vector<keytrack>*, double, double>> scenes;
+    shader* curShader;
     std::vector<keytrack>* curKeytracks;
+    int prevScene;
     int currentScene;
+    bool dontSwitchScene;
 
 
     TwBar *trackControls;
+    TwBar *keyframeControls;
 
     void compileShader();
     void drawQuad(float x1, float y1, float x2, float y2, float r, float g, float b, float a);
+
+
 
 public:
     timeline(GLFWwindow* window);

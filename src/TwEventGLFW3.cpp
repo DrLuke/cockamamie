@@ -167,7 +167,6 @@ int TW_CALL TwEventCursorPosGLFW3(GLFWwindow *window, double xpos, double ypos)
     return TwMouseMotion((int)xpos, (int)ypos);
 }
 
-
 int TW_CALL TwEventScrollGLFW3(GLFWwindow *window, double xoffset, double yoffset)
 {
     static int wheelPos = 0;
