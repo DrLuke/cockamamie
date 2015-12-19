@@ -161,7 +161,7 @@ int main(void)
     while (!glfwWindowShouldClose(window))
     {
         tim->work(); // Tick timeline
-        defaultShader->updateShader();
+
 
         float ratio;
         int width, height;
@@ -177,19 +177,6 @@ int main(void)
         //glRotatef((float) glfwGetTime() * 50.f, 0.f, 0.f, 1.f);
 
         //glfwGetWindowSize(window, &width, &height);
-
-        //defaultShader->render();
-
-        GLint loc = glGetUniformLocation(defaultShader->getShaderProgram(), "res");
-        if(loc != -1)
-        {
-            glUniform2f(loc, (float)width, (float)height);
-        }
-        loc = glGetUniformLocation(defaultShader->getShaderProgram(), "t");
-        if(loc != -1)
-        {
-            glUniform1f(loc, (GLfloat)tim->getTime());
-        }
 
         tim->render();
 

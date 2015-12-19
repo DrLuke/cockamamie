@@ -17,8 +17,15 @@
 #include "shader.h"
 #include "keytrack.h"
 
-void TW_CALL setValCallback(const void *value, void *kt);
-void TW_CALL GetValCallback(void *value, void *kt);
+void TW_CALL setVal0Callback(const void *value, void *kt);
+void TW_CALL GetVal0Callback(void *value, void *kt);
+void TW_CALL setVal1Callback(const void *value, void *kt);
+void TW_CALL GetVal1Callback(void *value, void *kt);
+void TW_CALL setVal2Callback(const void *value, void *kt);
+void TW_CALL GetVal2Callback(void *value, void *kt);
+void TW_CALL setVal3Callback(const void *value, void *kt);
+void TW_CALL GetVal3Callback(void *value, void *kt);
+
 
 void TW_CALL setKeyframeCallback(const void *value, void *kt);
 void TW_CALL GetKeyframeCallback(void *value, void *kt);

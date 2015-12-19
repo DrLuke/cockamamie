@@ -25,16 +25,19 @@ private:
     bool stop;
     double rqtime;
 
+    void interpValues();
+
 public:
-    keytrack(std::string name, int veclen);
+    keytrack(std::string name, int veclen=1);
     ~keytrack();
 
     void setKeyframe(int* val);
     void getKeyframe(int* val);
-    int getMaxKeyframes();
 
     void setValue(float* val);
     void getValue(float* val);
+    void setValuePos(float *val, int pos);
+    void getValuePos(float *val, int pos);
 
     void addKeyframe(double time, float* val, std::string inpstring="");
     void getKeyframeTimes(std::vector<double>* valVec);

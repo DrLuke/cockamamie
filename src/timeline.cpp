@@ -68,7 +68,7 @@ timeline::timeline(GLFWwindow* window) : window(window)
 
     std::tie(std::ignore, this->curKeytracks, std::ignore, std::ignore) = this->scenes[0];
 
-    curKeytracks->push_back(keytrack("Testname1", 1));
+    curKeytracks->push_back(keytrack("zoom", 1));
     curKeytracks->push_back(keytrack("Testname2", 2));
     curKeytracks->push_back(keytrack("Testname3", 3));
     curKeytracks->push_back(keytrack("Testname4", 4));
@@ -145,60 +145,90 @@ void timeline::work()
             std::string trackname = kt->getName();
 
             std::ostringstream stringStream;
-            stringStream << "label='Val" << trackname << "' step=0.1 group=" << trackname.c_str() << " ";
 
-            stringStream.str("");
-            stringStream.clear();
-            stringStream << "label='Value' group=" << trackname.c_str() << " ";
+
 
             switch(kt->getVeclen())
             {
                 case 1:
                 default:
-                    TwAddVarCB(this->keyframeControls, NULL, TW_TYPE_FLOAT, &setValCallback, &GetValCallback, kt,
+                    stringStream.str("");
+                    stringStream.clear();
+                    stringStream << "label='Val' group=" << trackname.c_str() << " ";
+                    TwAddVarCB(this->keyframeControls, NULL, TW_TYPE_FLOAT, &setVal0Callback, &GetVal0Callback, kt,
                                stringStream.str().c_str());
                     break;
 
                 case 2:
-                    TwAddVarCB(this->keyframeControls, NULL, TW_TYPE_FLOAT, &setValCallback, &GetValCallback, kt,
+                    stringStream.str("");
+                    stringStream.clear();
+                    stringStream << "label='X' group=" << trackname.c_str() << " ";
+                    TwAddVarCB(this->keyframeControls, NULL, TW_TYPE_FLOAT, &setVal0Callback, &GetVal0Callback, kt,
+                               stringStream.str().c_str());
+
+                    stringStream.str("");
+                    stringStream.clear();
+                    stringStream << "label='Y' group=" << trackname.c_str() << " ";
+                    TwAddVarCB(this->keyframeControls, NULL, TW_TYPE_FLOAT, &setVal1Callback, &GetVal1Callback, kt,
                                stringStream.str().c_str());
                     break;
 
                 case 3:
-                    TwAddVarCB(this->keyframeControls, NULL, TW_TYPE_COLOR3F, &setValCallback, &GetValCallback, kt,
+                    stringStream.str("");
+                    stringStream.clear();
+                    stringStream << "label='X' group=" << trackname.c_str() << " ";
+                    TwAddVarCB(this->keyframeControls, NULL, TW_TYPE_FLOAT, &setVal0Callback, &GetVal0Callback, kt,
+                               stringStream.str().c_str());
+
+                    stringStream.str("");
+                    stringStream.clear();
+                    stringStream << "label='Y' group=" << trackname.c_str() << " ";
+                    TwAddVarCB(this->keyframeControls, NULL, TW_TYPE_FLOAT, &setVal1Callback, &GetVal1Callback, kt,
+                               stringStream.str().c_str());
+
+                    stringStream.str("");
+                    stringStream.clear();
+                    stringStream << "label='Z' group=" << trackname.c_str() << " ";
+                    TwAddVarCB(this->keyframeControls, NULL, TW_TYPE_FLOAT, &setVal2Callback, &GetVal2Callback, kt,
                                stringStream.str().c_str());
                     break;
 
                 case 4:
-                    TwAddVarCB(this->keyframeControls, NULL, TW_TYPE_COLOR4F, &setValCallback, &GetValCallback, kt,
+                    stringStream.str("");
+                    stringStream.clear();
+                    stringStream << "label='X' group=" << trackname.c_str() << " ";
+                    TwAddVarCB(this->keyframeControls, NULL, TW_TYPE_FLOAT, &setVal0Callback, &GetVal0Callback, kt,
+                               stringStream.str().c_str());
+
+                    stringStream.str("");
+                    stringStream.clear();
+                    stringStream << "label='Y' group=" << trackname.c_str() << " ";
+                    TwAddVarCB(this->keyframeControls, NULL, TW_TYPE_FLOAT, &setVal1Callback, &GetVal1Callback, kt,
+                               stringStream.str().c_str());
+
+                    stringStream.str("");
+                    stringStream.clear();
+                    stringStream << "label='Z' group=" << trackname.c_str() << " ";
+                    TwAddVarCB(this->keyframeControls, NULL, TW_TYPE_FLOAT, &setVal2Callback, &GetVal2Callback, kt,
+                               stringStream.str().c_str());
+
+                    stringStream.str("");
+                    stringStream.clear();
+                    stringStream << "label='W' group=" << trackname.c_str() << " ";
+                    TwAddVarCB(this->keyframeControls, NULL, TW_TYPE_FLOAT, &setVal3Callback, &GetVal3Callback, kt,
                                stringStream.str().c_str());
                     break;
             }
 
 
-            //std::cout << keyframecount << std::endl;
             stringStream.str("");
             stringStream.clear();
-            //stringStream << "label='Keyframe' min=" << keyframemin << " max=" << keyframemax << " step=0.1 group=" << trackname.c_str() << " ";
-            stringStream << "label='Keyframe' step=1 group=" << trackname.c_str() << " ";
+            stringStream << "label='Keyframe' step=1.0 group=" << trackname.c_str() << " ";
 
             TwAddVarCB(this->keyframeControls, NULL, TW_TYPE_INT32, &setKeyframeCallback, &GetKeyframeCallback, kt,
                        stringStream.str().c_str());
             i++;
         }
-
-        /*
-        int keyframecount = kt->getMaxKeyframes();
-        int keyframemin = -1;
-        int keyframemax = -1;
-
-        if(keyframecount > 0)
-        {
-            keyframemin = 0;
-            keyframemax = keyframecount - 1;
-        }*/
-
-
 
         if(!isnan(kt->getRqtime()))
         {
@@ -208,24 +238,61 @@ void timeline::work()
     }
 }
 
-void TW_CALL setValCallback(const void *value, void *kt)
+void TW_CALL setVal0Callback(const void *value, void *kt)
 {
     keytrack* k = (keytrack*)kt;
     k->setStop(true);
-    k->setValue((float*) value);
+    k->setValuePos((float *) value, 0);
 }
 
-void TW_CALL GetValCallback(void *value, void *kt)
+void TW_CALL GetVal0Callback(void *value, void *kt)
 {
     keytrack* k = (keytrack *)kt;
-    k->getValue((float*)value);
+    k->getValuePos((float *) value, 0);
+}
+void TW_CALL setVal1Callback(const void *value, void *kt)
+{
+    std::cout << "beep" << std::endl;
+    keytrack* k = (keytrack*)kt;
+    k->setStop(true);
+    k->setValuePos((float *) value, 1);
+}
+
+void TW_CALL GetVal1Callback(void *value, void *kt)
+{
+    keytrack* k = (keytrack *)kt;
+    k->getValuePos((float *) value, 1);
+}
+void TW_CALL setVal2Callback(const void *value, void *kt)
+{
+    keytrack* k = (keytrack*)kt;
+    k->setStop(true);
+    k->setValuePos((float *) value, 2);
+}
+
+void TW_CALL GetVal2Callback(void *value, void *kt)
+{
+    keytrack* k = (keytrack *)kt;
+    k->getValuePos((float *) value, 2);
+}
+void TW_CALL setVal3Callback(const void *value, void *kt)
+{
+    keytrack* k = (keytrack*)kt;
+    k->setStop(true);
+    k->setValuePos((float *) value, 3);
+}
+
+void TW_CALL GetVal3Callback(void *value, void *kt)
+{
+    keytrack* k = (keytrack *)kt;
+    k->getValuePos((float *) value, 3);
 }
 
 void TW_CALL setKeyframeCallback(const void *value, void *kt)
 {
     keytrack* k = (keytrack*)kt;
     k->setStop(true);
-    k->setKeyframe((int*) value);
+    k->setKeyframe((int*)value);
 }
 
 void TW_CALL GetKeyframeCallback(void *value, void *kt)
@@ -284,11 +351,48 @@ void timeline::render()
     int width, height;
     glfwGetWindowSize(this->window, &width, &height);
 
+
     this->curShader->updateShader();
     this->curShader->render();
 
+    GLint loc = -1;
+    for(std::vector<keytrack>::iterator it = this->curKeytracks->begin(); it != this->curKeytracks->end(); ++it)
+    {
+        loc = glGetUniformLocation(this->curShader->getShaderProgram(), it->getName().c_str());
+        if(loc != -1)
+        {
+            float tempVal[4];
+            //it->getValue(tempVal);
+            for(int i = 0; i < 4; i++)
+            {
+                it->getValuePos(&tempVal[i], i);
+            }
+            switch(it->getVeclen())
+            {
+                default:
+                case 1:
+                    glUniform1f(loc, (float)tempVal[0]);
+                    break;
 
-    GLint loc = glGetUniformLocation(this->curShader->getShaderProgram(), "res");
+                case2:
+                    glUniform2f(loc, tempVal[0], tempVal[1]);
+                    break;
+
+                case3:
+                    glUniform3f(loc, tempVal[0], tempVal[1], tempVal[2]);
+                    break;
+
+                case4:
+                    glUniform4f(loc, tempVal[0], tempVal[1], tempVal[2], tempVal[3]);
+                    break;
+            }
+        }
+    }
+
+
+
+
+    loc = glGetUniformLocation(this->curShader->getShaderProgram(), "res");
     if(loc != -1)
     {
         glUniform2f(loc, (float)width, (float)height);
@@ -301,7 +405,7 @@ void timeline::render()
     loc = glGetUniformLocation(this->curShader->getShaderProgram(), "zoom");
     if(loc != -1)
     {
-        glUniform1f(loc, (GLfloat)1.0);
+        //glUniform1f(loc, (GLfloat)4.0);
     }
 
 

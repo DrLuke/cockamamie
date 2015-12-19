@@ -9,7 +9,7 @@ keytrack::keytrack(std::string name, int veclen) : veclen(veclen), name(name), s
 {
     for(int i = 0; i < this->veclen; i++)
     {
-        this->getsetBuf[i] = 0;
+        this->getsetBuf[i] = 0.0f;
     }
 }
 
@@ -19,9 +19,12 @@ keytrack::~keytrack()
 
 void keytrack::setValue(float* val)
 {
-    for(int i = 0; i < this->veclen; i++)
+    if(val!=NULL)
     {
-        this->getsetBuf[i] = val[i];
+        for(int i = 0; i < this->veclen; i++)
+        {
+            this->getsetBuf[i] = val[i];
+        }
     }
 
     bool onKeyframe = false;
@@ -30,23 +33,40 @@ void keytrack::setValue(float* val)
         if(this->time == std::get<0>(*it))
         {
             onKeyframe = true;
-            //TODO: Set current keyframe to val
+
+            std::get<1>(*it) = this->getsetBuf[0];
+            std::get<2>(*it) = this->getsetBuf[1];
+            std::get<3>(*it) = this->getsetBuf[2];
+            std::get<4>(*it) = this->getsetBuf[3];
         }
     }
     if(!onKeyframe)
     {
-        this->addKeyframe(this->time, val);
+        this->addKeyframe(this->time, this->getsetBuf);
     }
+}
+
+void keytrack::setValuePos(float *val, int pos)
+{
+    this->getsetBuf[pos] = *val;
+    this->setValue(NULL);
 }
 
 void keytrack::getValue(float* val)
 {
-    //TODO: Get interpolated value first
+    this->interpValues();
 
     for(int i = 0; i < this->veclen; i++)
     {
         val[i] = this->getsetBuf[i];
     }
+}
+
+void keytrack::getValuePos(float *val, int pos)
+{
+    this->interpValues();
+
+    *val = this->getsetBuf[pos];
 }
 
 void keytrack::setKeyframe(int *val)
@@ -92,10 +112,72 @@ void keytrack::getKeyframe(int *val)
     }
 }
 
-
-int keytrack::getMaxKeyframes()
+void keytrack::interpValues()
 {
-    return this->keyframes.size();
+    std::tuple<double, float, float, float, float, std::string>* prevFrame = NULL;
+    std::tuple<double, float, float, float, float, std::string>* nextFrame = NULL;
+
+    for(std::list<std::tuple<double, float, float, float, float, std::string>>::iterator it = this->keyframes.begin(); it != this->keyframes.end(); ++it)
+    {
+        if(time < std::get<0>(*it) && it == this->keyframes.begin())
+        {
+            nextFrame = &(*it);
+            break;
+        }
+        if(time < std::get<0>(*it))
+        {
+            nextFrame = &(*it);
+            it--;
+            prevFrame = &(*it);
+            break;
+        }
+        std::list<std::tuple<double, float, float, float, float, std::string>>::iterator it2 = it;
+        if(++it2 == this->keyframes.end())
+        {
+            prevFrame = &(*it);
+            break;
+        }
+    }
+
+    double prevTime;
+    double nextTime;
+    float prevVals[4];
+    float nextVals[4];
+    std::string interpmethod;
+
+    if(prevFrame == NULL && nextFrame != NULL)  // Before first keyframe
+    {
+        std::tie(nextTime, nextVals[0], nextVals[1], nextVals[2], nextVals[3], std::ignore) = *nextFrame;
+        for(int i = 0; i < this->veclen; i++)
+        {
+            this->getsetBuf[i] = nextVals[i];
+        }
+    }
+    else if(prevFrame != NULL && nextFrame != NULL) // Neither before first nor after last keyframe
+    {
+        std::tie(prevTime, prevVals[0], prevVals[1], prevVals[2], prevVals[3], interpmethod) = *prevFrame;
+        std::tie(nextTime, nextVals[0], nextVals[1], nextVals[2], nextVals[3], std::ignore) = *nextFrame;
+
+        float alpha = (float)((this->time - prevTime)/(nextTime - prevTime));
+
+        if(true)//interpmethod == "linear")
+        {
+            for(int i = 0; i < this->veclen; i++)
+            {
+                this->getsetBuf[i] = (float)(prevVals[i] + (nextVals[i] - prevVals[i])*(1.0f-(1.0f+cos(alpha*3.1415))*0.5));
+            }
+        }
+
+    }
+    else if(prevFrame != NULL && nextFrame == NULL) // After last keyframe
+    {
+        std::tie(prevTime, prevVals[0], prevVals[1], prevVals[2], prevVals[3], interpmethod) = *prevFrame;
+        for(int i = 0; i < this->veclen; i++)
+        {
+            this->getsetBuf[i] = prevVals[i];
+        }
+    }
+
 }
 
 void keytrack::addKeyframe(double time, float* val, std::string inpstring)
