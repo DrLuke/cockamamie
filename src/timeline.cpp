@@ -63,19 +63,19 @@ timeline::timeline(GLFWwindow* window) : window(window)
                " label='Current Scene' help='End time of timeline display (seconds)' group=Timeline");
 
     std::vector<keytrack>* newVec = new std::vector<keytrack>();
-    std::tuple<shader*, std::vector<keytrack>*, double, double> newScene = std::make_tuple (new shader("/home/drluke/prog/cockamamie/frag.glsl"), newVec, 0.0, 10.0);
+    std::tuple<shader*, std::vector<keytrack>*, double, double> newScene = std::make_tuple (new shader("/home/drluke/prog/cockamamie/frag.glsl"), newVec, 0.0, 15.0);
     scenes.push_back(newScene);
 
     std::tie(std::ignore, this->curKeytracks, std::ignore, std::ignore) = this->scenes[0];
 
     curKeytracks->push_back(keytrack("zoom", 1));
-    curKeytracks->push_back(keytrack("Testname2", 2));
+    curKeytracks->push_back(keytrack("offset", 2));
     curKeytracks->push_back(keytrack("Testname3", 3));
     curKeytracks->push_back(keytrack("Testname4", 4));
     curKeytracks->push_back(keytrack("Testname5", 1));
 
     newVec = new std::vector<keytrack>();
-    newScene = std::make_tuple (new shader("/home/drluke/prog/cockamamie/frag2.glsl"), newVec, 10.0, 30.0);
+    newScene = std::make_tuple (new shader("/home/drluke/prog/cockamamie/frag2.glsl"), newVec, 15.0, 30.0);
     scenes.push_back(newScene);
 
     std::tie(std::ignore, this->curKeytracks, std::ignore, std::ignore) = this->scenes[1];
@@ -143,11 +143,7 @@ void timeline::work()
         if(this->currentScene != this->prevScene)
         {
             std::string trackname = kt->getName();
-
             std::ostringstream stringStream;
-
-
-
             switch(kt->getVeclen())
             {
                 case 1:
@@ -155,7 +151,7 @@ void timeline::work()
                     stringStream.str("");
                     stringStream.clear();
                     stringStream << "label='Val' group=" << trackname.c_str() << " ";
-                    TwAddVarCB(this->keyframeControls, NULL, TW_TYPE_FLOAT, &setVal0Callback, &GetVal0Callback, kt,
+                    TwAddVarCB(this->keyframeControls, NULL, TW_TYPE_FLOAT, &setVal0Callback, &getVal0Callback, kt,
                                stringStream.str().c_str());
                     break;
 
@@ -163,13 +159,13 @@ void timeline::work()
                     stringStream.str("");
                     stringStream.clear();
                     stringStream << "label='X' group=" << trackname.c_str() << " ";
-                    TwAddVarCB(this->keyframeControls, NULL, TW_TYPE_FLOAT, &setVal0Callback, &GetVal0Callback, kt,
+                    TwAddVarCB(this->keyframeControls, NULL, TW_TYPE_FLOAT, &setVal0Callback, &getVal0Callback, kt,
                                stringStream.str().c_str());
 
                     stringStream.str("");
                     stringStream.clear();
                     stringStream << "label='Y' group=" << trackname.c_str() << " ";
-                    TwAddVarCB(this->keyframeControls, NULL, TW_TYPE_FLOAT, &setVal1Callback, &GetVal1Callback, kt,
+                    TwAddVarCB(this->keyframeControls, NULL, TW_TYPE_FLOAT, &setVal1Callback, &getVal1Callback, kt,
                                stringStream.str().c_str());
                     break;
 
@@ -177,19 +173,19 @@ void timeline::work()
                     stringStream.str("");
                     stringStream.clear();
                     stringStream << "label='X' group=" << trackname.c_str() << " ";
-                    TwAddVarCB(this->keyframeControls, NULL, TW_TYPE_FLOAT, &setVal0Callback, &GetVal0Callback, kt,
+                    TwAddVarCB(this->keyframeControls, NULL, TW_TYPE_FLOAT, &setVal0Callback, &getVal0Callback, kt,
                                stringStream.str().c_str());
 
                     stringStream.str("");
                     stringStream.clear();
                     stringStream << "label='Y' group=" << trackname.c_str() << " ";
-                    TwAddVarCB(this->keyframeControls, NULL, TW_TYPE_FLOAT, &setVal1Callback, &GetVal1Callback, kt,
+                    TwAddVarCB(this->keyframeControls, NULL, TW_TYPE_FLOAT, &setVal1Callback, &getVal1Callback, kt,
                                stringStream.str().c_str());
 
                     stringStream.str("");
                     stringStream.clear();
                     stringStream << "label='Z' group=" << trackname.c_str() << " ";
-                    TwAddVarCB(this->keyframeControls, NULL, TW_TYPE_FLOAT, &setVal2Callback, &GetVal2Callback, kt,
+                    TwAddVarCB(this->keyframeControls, NULL, TW_TYPE_FLOAT, &setVal2Callback, &getVal2Callback, kt,
                                stringStream.str().c_str());
                     break;
 
@@ -197,35 +193,44 @@ void timeline::work()
                     stringStream.str("");
                     stringStream.clear();
                     stringStream << "label='X' group=" << trackname.c_str() << " ";
-                    TwAddVarCB(this->keyframeControls, NULL, TW_TYPE_FLOAT, &setVal0Callback, &GetVal0Callback, kt,
+                    TwAddVarCB(this->keyframeControls, NULL, TW_TYPE_FLOAT, &setVal0Callback, &getVal0Callback, kt,
                                stringStream.str().c_str());
 
                     stringStream.str("");
                     stringStream.clear();
                     stringStream << "label='Y' group=" << trackname.c_str() << " ";
-                    TwAddVarCB(this->keyframeControls, NULL, TW_TYPE_FLOAT, &setVal1Callback, &GetVal1Callback, kt,
+                    TwAddVarCB(this->keyframeControls, NULL, TW_TYPE_FLOAT, &setVal1Callback, &getVal1Callback, kt,
                                stringStream.str().c_str());
 
                     stringStream.str("");
                     stringStream.clear();
                     stringStream << "label='Z' group=" << trackname.c_str() << " ";
-                    TwAddVarCB(this->keyframeControls, NULL, TW_TYPE_FLOAT, &setVal2Callback, &GetVal2Callback, kt,
+                    TwAddVarCB(this->keyframeControls, NULL, TW_TYPE_FLOAT, &setVal2Callback, &getVal2Callback, kt,
                                stringStream.str().c_str());
 
                     stringStream.str("");
                     stringStream.clear();
                     stringStream << "label='W' group=" << trackname.c_str() << " ";
-                    TwAddVarCB(this->keyframeControls, NULL, TW_TYPE_FLOAT, &setVal3Callback, &GetVal3Callback, kt,
+                    TwAddVarCB(this->keyframeControls, NULL, TW_TYPE_FLOAT, &setVal3Callback, &getVal3Callback, kt,
                                stringStream.str().c_str());
                     break;
             }
-
 
             stringStream.str("");
             stringStream.clear();
             stringStream << "label='Keyframe' step=1.0 group=" << trackname.c_str() << " ";
 
             TwAddVarCB(this->keyframeControls, NULL, TW_TYPE_INT32, &setKeyframeCallback, &GetKeyframeCallback, kt,
+                       stringStream.str().c_str());
+
+            stringStream.str("");
+            stringStream.clear();
+            stringStream << "label='Interpolation' group=" << trackname.c_str() << " ";
+
+            TwType interpType;
+            interpType = TwDefineEnumFromString("Interpolation", "Linear,Cosine,Cubic,Cubic Monotonic");
+
+            TwAddVarCB(this->keyframeControls, NULL, interpType, &setInterpCallback, &getInterpCallback, kt,
                        stringStream.str().c_str());
             i++;
         }
@@ -245,20 +250,19 @@ void TW_CALL setVal0Callback(const void *value, void *kt)
     k->setValuePos((float *) value, 0);
 }
 
-void TW_CALL GetVal0Callback(void *value, void *kt)
+void TW_CALL getVal0Callback(void *value, void *kt)
 {
     keytrack* k = (keytrack *)kt;
     k->getValuePos((float *) value, 0);
 }
 void TW_CALL setVal1Callback(const void *value, void *kt)
 {
-    std::cout << "beep" << std::endl;
     keytrack* k = (keytrack*)kt;
     k->setStop(true);
     k->setValuePos((float *) value, 1);
 }
 
-void TW_CALL GetVal1Callback(void *value, void *kt)
+void TW_CALL getVal1Callback(void *value, void *kt)
 {
     keytrack* k = (keytrack *)kt;
     k->getValuePos((float *) value, 1);
@@ -270,7 +274,7 @@ void TW_CALL setVal2Callback(const void *value, void *kt)
     k->setValuePos((float *) value, 2);
 }
 
-void TW_CALL GetVal2Callback(void *value, void *kt)
+void TW_CALL getVal2Callback(void *value, void *kt)
 {
     keytrack* k = (keytrack *)kt;
     k->getValuePos((float *) value, 2);
@@ -282,7 +286,7 @@ void TW_CALL setVal3Callback(const void *value, void *kt)
     k->setValuePos((float *) value, 3);
 }
 
-void TW_CALL GetVal3Callback(void *value, void *kt)
+void TW_CALL getVal3Callback(void *value, void *kt)
 {
     keytrack* k = (keytrack *)kt;
     k->getValuePos((float *) value, 3);
@@ -300,6 +304,57 @@ void TW_CALL GetKeyframeCallback(void *value, void *kt)
     keytrack* k = (keytrack *)kt;
     k->getKeyframe((int*)value);
 }
+
+void TW_CALL setInterpCallback(const void *value, void *kt)
+{
+    keytrack* k = (keytrack *)kt;
+    std::string interp;
+    switch(*(int*)value)
+    {
+        case KT_INTERP_LINEAR:
+            interp = "linear";
+            break;
+
+        case KT_INTERP_COSINE:
+            interp = "cosine";
+            break;
+
+        case KT_INTERP_CUBIC:
+            interp = "cubic";
+            break;
+
+        case KT_INTERP_CUBICMONOTONIC:
+            interp = "cubicmonotonic";
+            break;
+    }
+    k->setInterp(&interp);
+}
+
+void TW_CALL getInterpCallback(void *value, void *kt)
+{
+    keytrack* k = (keytrack *)kt;
+    std::string interp = "";
+    k->getInterp(&interp);
+
+    if(interp == "linear")
+    {
+        *(int*)value = KT_INTERP_LINEAR;
+    }
+    if(interp == "cosine")
+    {
+        *(int*)value = KT_INTERP_COSINE;
+    }
+    if(interp == "cubic")
+    {
+        *(int*)value = KT_INTERP_CUBIC;
+    }
+    if(interp == "cubicmonotonic")
+    {
+        *(int*)value = KT_INTERP_CUBICMONOTONIC;
+    }
+}
+
+
 
 void timeline::compileShader()
 {
@@ -371,18 +426,18 @@ void timeline::render()
             {
                 default:
                 case 1:
-                    glUniform1f(loc, (float)tempVal[0]);
+                    glUniform1f(loc, tempVal[0]);
                     break;
 
-                case2:
+                case 2:
                     glUniform2f(loc, tempVal[0], tempVal[1]);
                     break;
 
-                case3:
+                case 3:
                     glUniform3f(loc, tempVal[0], tempVal[1], tempVal[2]);
                     break;
 
-                case4:
+                case 4:
                     glUniform4f(loc, tempVal[0], tempVal[1], tempVal[2], tempVal[3]);
                     break;
             }

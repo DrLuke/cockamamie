@@ -11,6 +11,14 @@
 #include <vector>
 #include <AntTweakBar.h>
 
+#define KT_INTERP_LINEAR 0
+#define KT_INTERP_COSINE 1
+#define KT_INTERP_CUBIC 2
+#define KT_INTERP_CUBICMONOTONIC 3
+#define KT_INTERP_NEAREST 4
+#define KT_INTERP_CONST 5
+
+
 class keytrack
 {
 private:
@@ -38,8 +46,10 @@ public:
     void getValue(float* val);
     void setValuePos(float *val, int pos);
     void getValuePos(float *val, int pos);
+    void setInterp(std::string* inp);
+    void getInterp(std::string* inp);
 
-    void addKeyframe(double time, float* val, std::string inpstring="");
+    void addKeyframe(double time, float* val, std::string inpstring="linear");
     void getKeyframeTimes(std::vector<double>* valVec);
 
     int getVeclen() const

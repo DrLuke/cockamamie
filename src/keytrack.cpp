@@ -76,7 +76,18 @@ void keytrack::setKeyframe(int *val)
     int i = 0;
     for(std::list<std::tuple<double, float, float, float, float, std::string>>::iterator it = this->keyframes.begin(); it != this->keyframes.end(); ++it)
     {
-        if(i == *val)
+        std::list<std::tuple<double, float, float, float, float, std::string>>::iterator it2 = it;
+        if(++it2 == this->keyframes.end())
+        {
+            this->rqtime = std::get<0>(*it);
+            break;
+        }
+        else if(it == this->keyframes.begin() && *val < 0)
+        {
+            this->rqtime = std::get<0>(*it);
+            break;
+        }
+        else if(i == *val)
         {
             this->rqtime = std::get<0>(*it);
             break;
@@ -87,25 +98,23 @@ void keytrack::setKeyframe(int *val)
 
 void keytrack::getKeyframe(int *val)
 {
-    int listlen = this->keyframes.size();
+    unsigned long listlen = this->keyframes.size();
     if(listlen == 0)
     {
         *val = -1;
     }
     else
     {
-        //std::cout << "Start ----" << std::endl;
         int i = -1;
         for(std::list<std::tuple<double, float, float, float, float, std::string>>::iterator it = this->keyframes.begin(); it != this->keyframes.end(); ++it)
         {
-            //std::cout << std::get<0>(*it) << std::endl;
-            if (this->time > std::get<0>(*it))
+            if (this->time >= std::get<0>(*it))
             {
                 i++;
             }
             else
             {
-                //break;
+                break;
             }
         }
         *val = i;
@@ -160,7 +169,14 @@ void keytrack::interpValues()
 
         float alpha = (float)((this->time - prevTime)/(nextTime - prevTime));
 
-        if(true)//interpmethod == "linear")
+        if(interpmethod == "linear")
+        {
+            for(int i = 0; i < this->veclen; i++)
+            {
+                this->getsetBuf[i] = (float)(prevVals[i] + (nextVals[i] - prevVals[i])*alpha);
+            }
+        }
+        else if(interpmethod == "cosine")
         {
             for(int i = 0; i < this->veclen; i++)
             {
@@ -212,5 +228,43 @@ void keytrack::getKeyframeTimes(std::vector<double>* valVec)
     for(std::list<std::tuple<double, float, float, float, float, std::string>>::iterator it = this->keyframes.begin(); it != this->keyframes.end(); ++it)
     {
         valVec->push_back(std::get<0>(*it));
+    }
+}
+
+
+void keytrack::setInterp(std::string *inp)
+{
+    for(std::list<std::tuple<double, float, float, float, float, std::string>>::iterator it = this->keyframes.begin(); it != this->keyframes.end(); ++it)
+    {
+        if(this->time == std::get<0>(*it))
+        {
+
+            std::get<5>(*it) = *inp;
+        }
+    }
+}
+
+void keytrack::getInterp(std::string *inp)
+{
+    *inp = std::string("");
+    for(std::list<std::tuple<double, float, float, float, float, std::string>>::iterator it = this->keyframes.begin(); it != this->keyframes.end(); ++it)
+    {
+        if(time < std::get<0>(*it) && it == this->keyframes.begin())
+        {
+            *inp = std::get<5>(*it);
+            break;
+        }
+        if(time < std::get<0>(*it))
+        {
+            it--;
+            *inp = std::get<5>(*it);
+            break;
+        }
+        std::list<std::tuple<double, float, float, float, float, std::string>>::iterator it2 = it;
+        if(++it2 == this->keyframes.end())
+        {
+            *inp = std::get<5>(*it);
+            break;
+        }
     }
 }
