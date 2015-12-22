@@ -200,14 +200,14 @@ void keytrack::addKeyframe(double time, float* val, std::string inpstring)
 {
     if(this->keyframes.size() == 0)
     {
-        std::tuple<double, float, float, float, float, std::string> newTuple = std::make_tuple(this->time, val[0], val[1], val[2], val[3], inpstring);
+        std::tuple<double, float, float, float, float, std::string> newTuple = std::make_tuple(time, val[0], val[1], val[2], val[3], inpstring);
         this->keyframes.push_back(newTuple);
     }
     else
     {
         for(std::list<std::tuple<double, float, float, float, float, std::string>>::iterator it = this->keyframes.begin(); it != this->keyframes.end(); ++it)
         {
-            std::tuple<double, float, float, float, float, std::string> newTuple = std::make_tuple(this->time, val[0], val[1], val[2], val[3], inpstring);
+            std::tuple<double, float, float, float, float, std::string> newTuple = std::make_tuple(time, val[0], val[1], val[2], val[3], inpstring);
             if(time < std::get<0>(*it))
             {
                 this->keyframes.insert(it, newTuple);

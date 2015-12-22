@@ -14,6 +14,8 @@
 #include <AntTweakBar.h>
 #include <math.h>
 
+#include <rapidjson/document.h>
+
 #include "shader.h"
 #include "keytrack.h"
 
@@ -70,6 +72,9 @@ public:
     void operator()(){ return work();}
     void work();
     void render();
+
+    void readJSON(std::string* jsonstr);
+    void saveJSON(std::string* jsonstr);
 
     double getTime() const
     {

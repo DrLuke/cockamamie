@@ -2,6 +2,7 @@
 
 out vec4 colorOut;
 uniform vec2 res;
+uniform vec2 offset;
 uniform float t;
 uniform float zoom = 1.0;
 
@@ -74,7 +75,7 @@ vec4 march(vec3 cam, vec3 n)
 
 void main()
 {
-    vec2 uv = gl_FragCoord.xy/res.xy - vec2(0.5, 0.5);
+    vec2 uv = gl_FragCoord.xy/res.xy - vec2(0.5, 0.5) + offset;
     uv.x *= res.x / res.y;
 
     float rotangle = t*0.08;

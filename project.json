@@ -1,0 +1,33 @@
+{
+  "projectname": "FirstDemo",
+  "scenes": {
+    "0":{
+      "pathtoshader": "/home/drluke/prog/cockamamie/frag.glsl",
+      "start": 0.0,
+      "end": 15.0,
+      "keytracks":{
+        "zoom":{
+          "type": "float",
+          "keyframes":{
+            "0": {
+              "t": 2.243,
+              "interp": "linear",
+              "0": 1
+            },
+            "1": {
+              "t": 3.0,
+              "interp": "cosine",
+              "0": 3
+            },
+            "2": {
+              "t": 5.0,
+              "interp": "linear",
+              "0": 2
+            }
+          }
+        }
+      }
+    }
+
+  }
+}

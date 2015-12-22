@@ -62,7 +62,8 @@ timeline::timeline(GLFWwindow* window) : window(window)
     TwAddVarRO(this->trackControls, "sceneindicator", TW_TYPE_INT32, &this->currentScene,
                " label='Current Scene' help='End time of timeline display (seconds)' group=Timeline");
 
-    std::vector<keytrack>* newVec = new std::vector<keytrack>();
+
+    /*std::vector<keytrack>* newVec = new std::vector<keytrack>();
     std::tuple<shader*, std::vector<keytrack>*, double, double> newScene = std::make_tuple (new shader("/home/drluke/prog/cockamamie/frag.glsl"), newVec, 0.0, 15.0);
     scenes.push_back(newScene);
 
@@ -70,9 +71,9 @@ timeline::timeline(GLFWwindow* window) : window(window)
 
     curKeytracks->push_back(keytrack("zoom", 1));
     curKeytracks->push_back(keytrack("offset", 2));
-    curKeytracks->push_back(keytrack("Testname3", 3));
-    curKeytracks->push_back(keytrack("Testname4", 4));
-    curKeytracks->push_back(keytrack("Testname5", 1));
+    //curKeytracks->push_back(keytrack("Testname3", 3));
+    //curKeytracks->push_back(keytrack("Testname4", 4));
+    //curKeytracks->push_back(keytrack("Testname5", 1));
 
     newVec = new std::vector<keytrack>();
     newScene = std::make_tuple (new shader("/home/drluke/prog/cockamamie/frag2.glsl"), newVec, 15.0, 30.0);
@@ -83,7 +84,15 @@ timeline::timeline(GLFWwindow* window) : window(window)
     curKeytracks->push_back(keytrack("Testname1", 1));
     curKeytracks->push_back(keytrack("Testname2", 2));
     curKeytracks->push_back(keytrack("Testname3", 3));
-
+    */
+    std::string jsonpath = "/home/drluke/prog/cockamamie/project.json";
+    std::ifstream t(jsonpath);
+    std::stringstream buffer;
+    buffer << t.rdbuf();
+    std::string jsonString = buffer.str();
+    //std::cout << shaderString << std::endl;
+    this->readJSON(&jsonString);
+    std::tie(std::ignore, this->curKeytracks, std::ignore, std::ignore) = this->scenes[0];
 }
 
 timeline::~timeline()
@@ -537,5 +546,129 @@ void timeline::drawQuad(float x1, float y1, float x2, float y2, float r, float g
 
     glDrawArrays (GL_TRIANGLES, 0, 3);
     glDrawArrays (GL_TRIANGLES, 3, 3);
+
+}
+
+void timeline::readJSON(std::string *jsonstr)
+{
+    rapidjson::Document jsondoc;
+    jsondoc.Parse(jsonstr->c_str());
+
+    rapidjson::Value& jsonscenes = jsondoc["scenes"];   // Get scenes to iterate over
+
+    for(rapidjson::Value::ConstMemberIterator it = jsonscenes.MemberBegin(); it != jsonscenes.MemberEnd(); ++it)
+    {
+        // Scenes
+        std::string sceneName = it->name.GetString();   // Scene Name
+
+        std::vector<keytrack>* newKeytrackVector = new std::vector<keytrack>();
+        std::tuple<shader*, std::vector<keytrack>*, double, double> newScene = std::make_tuple (new shader("/home/drluke/prog/cockamamie/frag.glsl"), newKeytrackVector, 0.0, 15.0);
+        this->scenes.push_back(newScene);
+
+        for(rapidjson::Value::ConstMemberIterator keytracksContainerIt = it->value.MemberBegin(); keytracksContainerIt != it->value.MemberEnd(); ++keytracksContainerIt)
+        {
+            // Scene Properties
+            std::string memberName = keytracksContainerIt->name.GetString();   // Member Name
+            //std::cout << memberName << std::endl;
+            if(keytracksContainerIt->value.IsString())
+            {
+                std::cout << "String: " << keytracksContainerIt->value.GetString() << std::endl;
+            }
+            else if(keytracksContainerIt->value.IsObject() && memberName == "keytracks")
+            {
+                for(rapidjson::Value::ConstMemberIterator keytrackIt = keytracksContainerIt->value.MemberBegin(); keytrackIt != keytracksContainerIt->value.MemberEnd(); ++keytrackIt)
+                {
+                    std::string trackName = keytrackIt->name.GetString();
+                    rapidjson::Value::ConstMemberIterator typeIt = keytrackIt->value.FindMember("type");
+                    std::string typeString = "UNDEF";
+                    if(typeIt != keytrackIt->value.MemberEnd())
+                    {
+                        typeString = typeIt->value.GetString();
+                    }
+
+                    keytrack*newKeytrack;
+                    if(typeString == "float")
+                    {
+                        newKeytrack = new keytrack(trackName, 1);
+                    }
+                    else if(typeString == "vec2")
+                    {
+                        newKeytrack = new keytrack(trackName, 2);
+                    }
+                    else if(typeString == "vec3")
+                    {
+                        newKeytrack = new keytrack(trackName, 3);
+                    }
+                    else if(typeString == "vec4")
+                    {
+                        newKeytrack = new keytrack(trackName, 4);
+                    }
+
+                    rapidjson::Value::ConstMemberIterator kfIt = keytrackIt->value.FindMember("keyframes");
+                    if(kfIt != keytrackIt->value.MemberEnd())
+                    {
+                        //std::cout << "Object: " << memberName << std::endl;
+                        for(rapidjson::Value::ConstMemberIterator keyframeIt = kfIt->value.MemberBegin(); keyframeIt != kfIt->value.MemberEnd(); ++keyframeIt)
+                        {
+                            double kfTime = nan("");
+                            rapidjson::Value::ConstMemberIterator timeIt = keyframeIt->value.FindMember("t");
+                            if(timeIt != keyframeIt->value.MemberEnd())
+                            {
+                                kfTime = timeIt->value.GetDouble();
+                            }
+                            std::string kfInterp = "";
+                            rapidjson::Value::ConstMemberIterator interpIt = keyframeIt->value.FindMember("interp");
+                            if(interpIt != keyframeIt->value.MemberEnd())
+                            {
+                                kfInterp = interpIt->value.GetString();
+                                std::cout << kfInterp << std::endl;
+                            }
+
+                            // New keyframe
+                            float val[4];
+                            if(typeString == "float")
+                            {
+                                rapidjson::Value::ConstMemberIterator valIt = keyframeIt->value.FindMember("0");
+                                val[0] = (float) valIt->value.GetDouble();
+                            }
+                            else if(typeString == "vec2")
+                            {
+                                rapidjson::Value::ConstMemberIterator valIt = keyframeIt->value.FindMember("0");
+                                val[0] = (float) valIt->value.GetDouble();
+                                valIt = keyframeIt->value.FindMember("1");
+                                val[1] = (float) valIt->value.GetDouble();
+                            }
+                            else if(typeString == "vec3")
+                            {
+                                rapidjson::Value::ConstMemberIterator valIt = keyframeIt->value.FindMember("0");
+                                val[0] = (float) valIt->value.GetDouble();
+                                valIt = keyframeIt->value.FindMember("1");
+                                val[1] = (float) valIt->value.GetDouble();
+                                valIt = keyframeIt->value.FindMember("2");
+                                val[2] = (float) valIt->value.GetDouble();
+                            }
+                            else if(typeString == "vec4")
+                            {
+                                rapidjson::Value::ConstMemberIterator valIt = keyframeIt->value.FindMember("0");
+                                val[0] = (float) valIt->value.GetDouble();
+                                valIt = keyframeIt->value.FindMember("1");
+                                val[1] = (float) valIt->value.GetDouble();
+                                valIt = keyframeIt->value.FindMember("2");
+                                val[2] = (float) valIt->value.GetDouble();
+                                valIt = keyframeIt->value.FindMember("3");
+                                val[3] = (float) valIt->value.GetDouble();
+                            }
+                            newKeytrack->addKeyframe(kfTime, val, kfInterp);
+                        }
+                    }
+                    newKeytrackVector->push_back(*newKeytrack);
+                }
+            }
+        }
+    }
+}
+
+void timeline::saveJSON(std::string *jsonstr)
+{
 
 }
