@@ -15,6 +15,7 @@
 #include <math.h>
 
 #include <rapidjson/document.h>
+#include <rapidjson/prettywriter.h>
 
 #include "shader.h"
 #include "keytrack.h"
@@ -54,7 +55,6 @@ private:
     std::vector<keytrack>* curKeytracks;
     int prevScene;
     int currentScene;
-    bool dontSwitchScene;
 
 
     TwBar *trackControls;

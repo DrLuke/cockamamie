@@ -92,6 +92,7 @@ timeline::timeline(GLFWwindow* window) : window(window)
     std::string jsonString = buffer.str();
     //std::cout << shaderString << std::endl;
     this->readJSON(&jsonString);
+    this->saveJSON(&jsonString);
     std::tie(std::ignore, this->curKeytracks, std::ignore, std::ignore) = this->scenes[0];
 }
 
@@ -621,7 +622,6 @@ void timeline::readJSON(std::string *jsonstr)
                             if(interpIt != keyframeIt->value.MemberEnd())
                             {
                                 kfInterp = interpIt->value.GetString();
-                                std::cout << kfInterp << std::endl;
                             }
 
                             // New keyframe
@@ -670,5 +670,100 @@ void timeline::readJSON(std::string *jsonstr)
 
 void timeline::saveJSON(std::string *jsonstr)
 {
+    rapidjson::Document jsondoc;
+    jsondoc.SetObject();
 
+    jsondoc.AddMember("projectname", "FIXME", jsondoc.GetAllocator());  // FIXME: Get project name (And maybe also save it :)
+
+    rapidjson::Value scenesObj = rapidjson::Value(rapidjson::kObjectType);
+    int sceneCounter = 0;
+    for(std::vector<std::tuple<shader*, std::vector<keytrack>*, double, double>>::iterator scenesIt = this->scenes.begin(); scenesIt != this->scenes.end(); ++scenesIt)
+    {
+        std::string sceneName = std::to_string(sceneCounter);
+        rapidjson::Value newScene = rapidjson::Value(rapidjson::kObjectType);
+        newScene.AddMember("pathtoshader", "ExtractmeFromCurrentShader", jsondoc.GetAllocator());   // FIXME: Get from current scene
+        newScene.AddMember("start", 0.0f, jsondoc.GetAllocator());  // FIXME: Get from current scene
+        newScene.AddMember("end", 0.0f, jsondoc.GetAllocator());    // FIXME: Get from current scene
+
+        rapidjson::Value keytrackContainerObj = rapidjson::Value(rapidjson::kObjectType);
+        std::vector<keytrack>* curKeytracks;
+        std::tie(std::ignore, curKeytracks, std::ignore, std::ignore) = *scenesIt;
+
+        for(std::vector<keytrack>::iterator keytrackIt = curKeytracks->begin(); keytrackIt != curKeytracks->end(); ++keytrackIt)
+        {
+            rapidjson::Value keytrackObj = rapidjson::Value(rapidjson::kObjectType);
+            std::string keytrackName = keytrackIt->getName();
+
+            std::string typeString = "";
+            switch(keytrackIt->getVeclen())
+            {
+                default:
+                case 1:
+                    keytrackObj.AddMember("type", "float", jsondoc.GetAllocator());
+                    break;
+float
+                case 2:
+                    keytrackObj.AddMember("type", "vec2", jsondoc.GetAllocator());
+                    break;
+
+                case 3:
+                    keytrackObj.AddMember("type", "vec3", jsondoc.GetAllocator());
+                    break;
+
+                case 4:
+                    keytrackObj.AddMember("type", "vec4", jsondoc.GetAllocator());
+                    break;
+            }
+
+            rapidjson::Value keyframeContainerObjs = rapidjson::Value(rapidjson::kObjectType);
+
+            int keyframeCounter = 0;
+            for(std::list<std::tuple<double, float, float, float, float, std::string>>::iterator keyframeIt = keytrackIt->getKeyframes()->begin(); keyframeIt != keytrackIt->getKeyframes()->end(); ++keyframeIt)
+            {
+                rapidjson::Value keyframeObj = rapidjson::Value(rapidjson::kObjectType);
+                double time;
+                float vals[4];
+                std::string interp;
+                std::tie(time, vals[0], vals[1], vals[2], vals[3], interp) = *keyframeIt;
+
+                keyframeObj.AddMember("t", time, jsondoc.GetAllocator());
+
+                switch(keytrackIt->getVeclen())
+                {
+                    //FIXME: This will produce the wrong order
+                    case 4:
+                        keyframeObj.AddMember("3", vals[3], jsondoc.GetAllocator());
+
+                    case 3:
+                        keyframeObj.AddMember("2", vals[2], jsondoc.GetAllocator());
+
+                    case 2:
+                        keyframeObj.AddMember("1", vals[1], jsondoc.GetAllocator());
+
+                    case 1:
+                        keyframeObj.AddMember("0", vals[0], jsondoc.GetAllocator());
+                }
+
+                std::string keyframeName = std::to_string(keyframeCounter++);
+                keyframeContainerObjs.AddMember(rapidjson::Value(keyframeName.c_str(), jsondoc.GetAllocator()).Move(), keyframeObj, jsondoc.GetAllocator());
+            }
+            keytrackObj.AddMember("keyframes", keyframeContainerObjs, jsondoc.GetAllocator());
+            keytrackContainerObj.AddMember(rapidjson::Value(keytrackName.c_str(),jsondoc.GetAllocator()).Move(), keytrackObj, jsondoc.GetAllocator());
+        }
+        newScene.AddMember("keytracks", keytrackContainerObj, jsondoc.GetAllocator());
+        scenesObj.AddMember(rapidjson::Value(sceneName.c_str(),jsondoc.GetAllocator()).Move(), newScene, jsondoc.GetAllocator());
+    }
+    jsondoc.AddMember("scenes", scenesObj, jsondoc.GetAllocator());
+
+
+
+
+
+
+
+    rapidjson::StringBuffer buf;
+    rapidjson::PrettyWriter<rapidjson::StringBuffer> writer(buf);
+    jsondoc.Accept(writer);
+
+    std::cout << buf.GetString() << std::endl;
 }

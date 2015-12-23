@@ -91,6 +91,11 @@ public:
     {
         keytrack::rqtime = rqtime;
     }
+
+    std::list<std::tuple<double, float, float, float, float, std::string>>* getKeyframes()
+    {
+        return &keyframes;
+    }
 };
 
 
