@@ -36,6 +36,10 @@ public:
         return shaderProgram;
     }
 
+    std::string getFilepath()
+    {
+        return filepath;
+    }
 };
 
 
